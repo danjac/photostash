@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+  <div class="py-12 text-center">
+    <h1 class="text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+      {% blocktranslate with name=request.site.name %}Welcome to {{ name }}{% endblocktranslate %}
+    </h1>
+    <p class="mt-4 text-lg text-zinc-600 dark:text-zinc-400">
+      {{ request.site.name }}
+    </p>
+    <div class="flex gap-4 justify-center mt-8">
+      {% if user.is_authenticated %}
+        <a href="{% url 'account_email' %}" class="btn btn-primary">{% translate "My Account" %}</a>
+      {% else %}
+        <a href="{% url 'account_signup' %}" class="btn btn-primary">{% translate "Get started" %}</a>
+        <a href="{% url 'account_login' %}" class="btn btn-secondary">{% translate "Sign in" %}</a>
+      {% endif %}
+    </div>
+  </div>
+{% endblock content %}

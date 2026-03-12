@@ -1,0 +1,49 @@
+@layer base {
+    .divide-x {
+        @variant dark {
+            & > * + *,
+            & > * {
+                border-color: var(--color-zinc-600);
+            }
+        }
+    }
+
+    .divide-y {
+        @variant dark {
+            & > * + *,
+            & > * {
+                border-color: var(--color-zinc-600);
+            }
+        }
+    }
+
+    .border {
+        @variant dark {
+            border-color: var(--color-zinc-600);
+        }
+    }
+
+    .border-t {
+        @variant dark {
+            border-color: var(--color-zinc-600);
+        }
+    }
+
+    .border-l {
+        @variant dark {
+            border-color: var(--color-zinc-600);
+        }
+    }
+
+    .border-r {
+        @variant dark {
+            border-color: var(--color-zinc-600);
+        }
+    }
+
+    .border-b {
+        @variant dark {
+            border-color: var(--color-zinc-600);
+        }
+    }
+}

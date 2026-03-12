@@ -1,0 +1,57 @@
+name: photostash:deploy
+run-name: ${{ github.actor }} is deploying to production
+on:
+  workflow_dispatch:
+    branches:
+      - main
+permissions:
+  attestations: write
+  contents: write
+  packages: write
+  id-token: write
+jobs:
+  checks:
+    uses: ./.github/workflows/checks.yml
+  build:
+    uses: ./.github/workflows/docker.yml
+    needs: checks
+    secrets: inherit # pragma: allowlist secret
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: read
+    env:
+      HELM_RELEASE: site
+      HELM_CHART: helm/site
+      KUBECONFIG_FILE: photostash.yaml
+steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede  # v4
+      - name: Set up Helm
+        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4  # v4
+      - name: Write kubeconfig
+        env:
+          KUBECONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64 }}
+        run: |
+          mkdir -p "$HOME/.kube"
+          echo "$KUBECONFIG_BASE64" | base64 -d > "$HOME/.kube/$KUBECONFIG_FILE"
+          chmod 600 "$HOME/.kube/$KUBECONFIG_FILE"
+      - name: Write Helm secret values
+        env:
+          HELM_VALUES_SECRET: ${{ secrets.HELM_VALUES_SECRET }}
+        run: |
+          printf '%s' "$HELM_VALUES_SECRET" > "$HELM_CHART/values.secret.yaml"
+          chmod 600 "$HELM_CHART/values.secret.yaml"
+      - name: Deploy to Kubernetes
+        env:
+          IMAGE: ${{ needs.build.outputs.image }}
+        run: |
+          helm upgrade "$HELM_RELEASE" "$HELM_CHART"/ \
+            --kubeconfig "$HOME/.kube/$KUBECONFIG_FILE" \
+            --rollback-on-failure \
+            --set "image=$IMAGE" \
+            -f "$HELM_CHART/values.yaml" \
+            -f "$HELM_CHART/values.secret.yaml"
