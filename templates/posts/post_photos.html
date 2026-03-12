@@ -20,9 +20,10 @@
     {% endthumbnail %}
 
     {% if photo.is_cover %}
-      <span class="absolute right-0 bottom-0 left-0 py-0.5 leading-tight text-center text-white rounded-b bg-black/60 text-[10px]">
-        {% translate "Cover" %}
-      </span>
+      <span
+        x-show="newCoverIndex < 0"
+        class="absolute right-0 bottom-0 left-0 py-0.5 leading-tight text-center text-white rounded-b bg-black/60 text-[10px]"
+      >{% translate "Cover" %}</span>
     {% else %}
       <button
         type="button"

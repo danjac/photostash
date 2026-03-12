@@ -32,7 +32,7 @@ def post_list(request: HttpRequest) -> TemplateResponse:
     return render_paginated_response(
         request,
         "posts/post_list.html",
-        Post.objects.with_cover_photo(),
+        Post.objects.with_cover_photo().order_by("-created"),
     )
 
 
