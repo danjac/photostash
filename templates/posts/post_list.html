@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+  {% include "header.html" with title=_("Posts") %}
+  <div class="mt-4">
+    <a href="{% url 'posts:post_create' %}" class="btn btn-primary">
+      {% translate "Add Post" %}
+    </a>
+  </div>
+  {% with pagination_target="post-list" %}
+    {% fragment "paginate.html" %}
+      {% for item in page.object_list %}
+        <div>{{ item }}</div>
+      {% empty %}
+        <p class="text-zinc-500">{% translate "No posts yet." %}</p>
+      {% endfor %}
+    {% endfragment %}
+  {% endwith %}
+{% endblock content %}

@@ -17,6 +17,7 @@ urlpatterns = [
     path("accept-cookies/", views.accept_cookies, name="accept_cookies"),
     path("i18n/", include("django.conf.urls.i18n")),
     path("", include("photostash.users.urls")),
+    path("posts/", include("photostash.posts.urls")),
     path("account/", include("allauth.urls")),
     path(
         "ht/live/",

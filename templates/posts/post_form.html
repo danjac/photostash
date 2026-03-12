@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+  {% include "header.html" with title=_("Post") %}
+  {% partialdef post_form inline %}
+    <div id="post-form">
+      {% fragment "form.html" htmx=True hx_target="#post-form" %}
+        {% for field in form %}
+          {{ field.as_field_group }}
+        {% endfor %}
+        <button type="submit" class="btn btn-primary" hx-disabled-elt="this">
+          {% translate "Save" %}
+        </button>
+        <a href="{% url 'posts:post_list' %}" class="btn btn-secondary">
+          {% translate "Cancel" %}
+        </a>
+      {% endfragment %}
+    </div>
+  {% endpartialdef post_form %}
+{% endblock content %}

@@ -40,6 +40,8 @@ dependencies = [
   "uvicorn[standard]>=0.41.0",
   "whitenoise[brotli]>=6.11.0",
   "django-storages[s3]>=1.14.4",
+  "sorl-thumbnail>=13.0.0",
+  "pillow>=12.1.1",
 ]
 [dependency-groups]
 dev = [

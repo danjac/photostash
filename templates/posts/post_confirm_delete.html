@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+  {% include "header.html" with title=_("Delete Post") %}
+  <div class="mt-4">
+    <p>
+      {% blocktranslate with title=post.title %}
+        Are you sure you want to delete <strong>{{ title }}</strong>?
+      {% endblocktranslate %}
+    </p>
+    <div class="flex gap-3 mt-6">
+      <button
+        class="btn btn-danger"
+        hx-delete="{% url 'posts:post_delete' post.pk %}"
+        hx-confirm="{% translate "This cannot be undone." %}"
+        hx-target="body"
+        hx-push-url="{% url 'posts:post_list' %}"
+      >{% translate "Delete" %}</button>
+      <a href="{% url 'posts:post_detail' post.pk %}" class="btn btn-secondary">
+        {% translate "Cancel" %}
+      </a>
+    </div>
+  </div>
+{% endblock content %}

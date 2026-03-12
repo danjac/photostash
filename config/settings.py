@@ -58,6 +58,9 @@ INSTALLED_APPS: list[str] = [
     "heroicons",
     "widget_tweaks",
     "photostash.users",
+    "sorl.thumbnail",
+    # Local apps
+    "photostash.posts",
 ]
 
 
