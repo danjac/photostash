@@ -1,0 +1,50 @@
+{% load heroicons i18n thumbnail %}
+{% for photo in photos %}
+  <div
+    id="photo-{{ photo.pk }}"
+    class="relative flex-shrink-0 size-28"
+  >
+    {% thumbnail photo.photo "200x200" crop="center" as thumb %}
+      <img
+        src="{{ thumb.url }}"
+        alt="{{ post.title }}"
+        width="{{ thumb.width }}"
+        height="{{ thumb.height }}"
+        class="object-cover rounded size-28"
+        loading="lazy"
+      >
+    {% empty %}
+      <div class="flex size-28 items-center justify-center rounded bg-(--color-border)">
+        {% heroicon_outline "photo" class="size-8 text-(--color-text-muted)" %}
+      </div>
+    {% endthumbnail %}
+
+    {% if photo.is_cover %}
+      <span class="absolute right-0 bottom-0 left-0 py-0.5 leading-tight text-center text-white rounded-b bg-black/60 text-[10px]">
+        {% translate "Cover" %}
+      </span>
+    {% else %}
+      <button
+        type="button"
+        class="absolute right-0 bottom-0 left-0 py-0.5 leading-tight text-center rounded-b hover:bg-white bg-white/80 text-[10px] text-zinc-700"
+        hx-post="{% url 'posts:photo_set_cover' post.pk photo.pk %}"
+        hx-params="none"
+        hx-target="#photos-grid"
+        hx-swap="innerHTML"
+        hx-headers='{"{{ csrf_header }}": "{{ csrf_token }}"}'
+      >{% translate "Set cover" %}</button>
+    {% endif %}
+
+    <button
+      type="button"
+      class="flex absolute -top-1 -right-1 justify-center items-center text-white rounded-full size-4 bg-zinc-700 hover:bg-zinc-900"
+      hx-delete="{% url 'posts:photo_delete' post.pk photo.pk %}"
+      hx-params="none"
+      hx-target="#photo-{{ photo.pk }}"
+      hx-swap="delete"
+      hx-headers='{"{{ csrf_header }}": "{{ csrf_token }}"}'
+    >
+      {% heroicon_mini "x-mark" class="size-2.5" %}
+    </button>
+  </div>
+{% endfor %}

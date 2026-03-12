@@ -1,14 +1,140 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load heroicons i18n static %}
+
+{% block scripts %}
+  <script src="{% static 'vendor/alpine-focus-3.15.2.min.js' %}" defer></script>
+  {{ block.super }}
+{% endblock scripts %}
 
 {% block content %}
   {% include "header.html" with title=_("Post") %}
   {% partialdef post_form inline %}
     <div id="post-form">
-      {% fragment "form.html" htmx=True hx_target="#post-form" %}
+      {% fragment "form.html" htmx=True hx_target="#post-form" multipart=True %}
+        {% if form.non_field_errors %}
+          <ul class="text-sm text-danger-600 dark:text-danger-400">
+            {% for error in form.non_field_errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+
+        {# Photo upload drop zone — at the top of the form #}
+        <div
+          x-data="{
+                  files: [],
+                  previews: [],
+                  dragging: false,
+                  newCoverIndex: -1,
+                  async handleFiles(fileList, inputEl) {
+                  const newFiles = Array.from(fileList);
+                  const newPreviews = await Promise.all(
+                  newFiles.map(file => new Promise(resolve => {
+                  const reader = new FileReader();
+                  reader.onload = e => resolve(e.target.result);
+                  reader.readAsDataURL(file);
+                  }))
+                  );
+                  newFiles.forEach(f => this.files.push(f));
+                  newPreviews.forEach(p => this.previews.push(p));
+                  if (inputEl) inputEl.value = '';
+                  this.syncInput();
+                  },
+                  removeFile(i) {
+                  this.files.splice(i, 1);
+                  this.previews.splice(i, 1);
+                  if (this.newCoverIndex === i) this.newCoverIndex = -1;
+                  else if (this.newCoverIndex > i) this.newCoverIndex--;
+                  this.syncInput();
+                  },
+                  syncInput() {
+                  const dt = new DataTransfer();
+                  this.files.forEach(f => dt.items.add(f));
+                  this.$refs.fileInput.files = dt.files;
+                  }
+                  }"
+        >
+          <div
+            @dragover.prevent="dragging = true"
+            @dragleave.prevent="dragging = false"
+            @drop.prevent="dragging = false; handleFiles($event.dataTransfer.files, null)"
+            @click="$refs.fileInput.click()"
+            :class="dragging ? 'border-primary-500 bg-primary-500/5' : 'border-(--color-border) hover:border-primary-400'"
+            class="flex flex-col gap-2 justify-center items-center p-6 max-w-xl rounded-xl border-2 border-dashed transition-colors cursor-pointer min-h-32"
+          >
+            {% heroicon_outline "photo" class="size-8 text-(--color-text-muted)" %}
+            <p class="text-sm text-(--color-text-muted)">
+              {% translate "Click to add photos, or drag and drop here" %}
+            </p>
+          </div>
+          <input
+            x-ref="fileInput"
+            type="file"
+            name="photos"
+            id="id_photos"
+            multiple
+            accept="image/*"
+            @change="handleFiles($event.target.files, $event.target)"
+            class="sr-only"
+          >
+          <div class="flex flex-wrap gap-1.5 mt-2">
+            {# Existing saved photos (edit view) — cover first; wrapper is display:contents so items join the flex row #}
+            {% if post %}
+              <div id="photos-grid" class="contents">
+                {% include "posts/post_photos.html" with photos=photos %}
+              </div>
+            {% endif %}
+
+            {# New previews (client-side, before upload) #}
+            {% if post %}
+              <input type="hidden" name="new_cover_index" :value="newCoverIndex">
+            {% endif %}
+            <template x-for="(preview, i) in previews" :key="i">
+              <div class="relative flex-shrink-0 size-28" x-show="preview">
+                <img
+                  :src="preview"
+                  width="112"
+                  height="112"
+                  class="object-cover rounded size-28"
+                  alt="{{ post.title|default:'' }}"
+                >
+                {% if post %}
+                  <template x-if="newCoverIndex === i">
+                    <span class="absolute right-0 bottom-0 left-0 py-0.5 leading-tight text-center text-white rounded-b bg-black/60 text-[10px]">
+                      {% translate "Cover" %}
+                    </span>
+                  </template>
+                  <template x-if="newCoverIndex !== i">
+                    <button
+                      type="button"
+                      @click.stop="newCoverIndex = i"
+                      class="absolute right-0 bottom-0 left-0 py-0.5 leading-tight text-center rounded-b hover:bg-white bg-white/80 text-[10px] text-zinc-700"
+                    >{% translate "Set cover" %}</button>
+                  </template>
+                {% else %}
+                  <template x-if="i === 0">
+                    <span class="absolute right-0 bottom-0 left-0 py-0.5 leading-tight text-center text-white rounded-b bg-black/60 text-[10px]">
+                      {% translate "Cover" %}
+                    </span>
+                  </template>
+                {% endif %}
+                <button
+                  type="button"
+                  @click.stop="removeFile(i)"
+                  class="flex absolute -top-1 -right-1 justify-center items-center text-white rounded-full size-4 bg-zinc-700 hover:bg-zinc-900"
+                >
+                  {% heroicon_mini "x-mark" class="size-2.5" %}
+                </button>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        {# Post metadata fields #}
         {% for field in form %}
           {{ field.as_field_group }}
         {% endfor %}
+
         <button type="submit" class="btn btn-primary" hx-disabled-elt="this">
           {% translate "Save" %}
         </button>

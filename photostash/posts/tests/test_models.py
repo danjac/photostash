@@ -1,6 +1,7 @@
 import pytest
 from django.db import IntegrityError
 
+from photostash.posts.models import Post
 from photostash.posts.tests.factories import PhotoFactory, PostFactory
 
 
@@ -34,3 +35,18 @@ class TestPhoto:
         PhotoFactory(post=post, is_cover=True)
         with pytest.raises(IntegrityError):
             PhotoFactory(post=post, is_cover=True)
+
+
+@pytest.mark.django_db
+class TestPostQuerySet:
+    def test_with_cover_photo_returns_path(self):
+        post = PostFactory()
+        cover = PhotoFactory(post=post, is_cover=True)
+        result = Post.objects.with_cover_photo().get(pk=post.pk)
+        assert result.cover_photo == str(cover.photo)
+
+    def test_with_cover_photo_returns_none_without_cover(self):
+        post = PostFactory()
+        PhotoFactory(post=post, is_cover=False)
+        result = Post.objects.with_cover_photo().get(pk=post.pk)
+        assert result.cover_photo is None

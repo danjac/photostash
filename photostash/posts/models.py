@@ -2,13 +2,29 @@ from typing import ClassVar
 
 from django.conf import settings
 from django.db import models
-from django.db.models import Q, UniqueConstraint
+from django.db.models import OuterRef, Q, Subquery, UniqueConstraint
 from django.urls import reverse
 from sorl.thumbnail import ImageField
 
 
+class PostQuerySet(models.QuerySet):
+    """Custom QuerySet for Post model to include additional methods for querying posts."""
+
+    def with_cover_photo(self) -> PostQuerySet:
+        """Annotate each post with the file path of its cover photo."""
+        return self.annotate(
+            cover_photo=Subquery(
+                Photo.objects.filter(post=OuterRef("pk"), is_cover=True).values(
+                    "photo"
+                )[:1]
+            )
+        )
+
+
 class Post(models.Model):
     """A user-created post containing photos."""
+
+    objects: PostQuerySet = PostQuerySet.as_manager()  # type: ignore[assignment]
 
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,

@@ -1,20 +1,48 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n thumbnail %}
 
 {% block content %}
-  {% include "header.html" with title=_("Posts") %}
-  <div class="mt-4">
+  {% fragment "header.html" title=_("Posts") %}
     <a href="{% url 'posts:post_create' %}" class="btn btn-primary">
       {% translate "Add Post" %}
     </a>
-  </div>
+  {% endfragment %}
   {% with pagination_target="post-list" %}
     {% fragment "paginate.html" %}
-      {% for item in page.object_list %}
-        <div>{{ item }}</div>
-      {% empty %}
-        <p class="text-zinc-500">{% translate "No posts yet." %}</p>
-      {% endfor %}
+      {% fragment "grid.html" %}
+        {% for item in page.object_list %}
+          {% fragment "grid.html#item" %}
+            <a
+              href="{{ item.get_absolute_url }}"
+              class="group flex flex-col overflow-hidden rounded-xl border border-(--color-border) bg-(--color-surface) transition-shadow hover:shadow-md"
+            >
+              {% if item.cover_photo %}
+                {% thumbnail item.cover_photo "640x360" crop="center" as thumb %}
+                  <img
+                    src="{{ thumb.url }}"
+                    alt="{{ item.title }}"
+                    width="{{ thumb.width }}"
+                    height="{{ thumb.height }}"
+                    class="object-cover w-full aspect-video"
+                    loading="lazy"
+                  >
+                {% empty %}
+                  <div class="aspect-video w-full bg-(--color-border)"></div>
+                {% endthumbnail %}
+              {% else %}
+                <div class="aspect-video w-full bg-(--color-border)"></div>
+              {% endif %}
+              <div class="flex flex-col gap-1 p-4">
+                <h2 class="font-bold leading-tight line-clamp-2 dark:group-hover:text-primary-400 group-hover:text-primary-600">
+                  {{ item.title }}
+                </h2>
+              </div>
+            </a>
+          {% endfragment %}
+        {% empty %}
+          {% fragment "grid.html#empty" %}{% translate "No posts yet." %}{% endfragment %}
+        {% endfor %}
+      {% endfragment %}
     {% endfragment %}
   {% endwith %}
 {% endblock content %}

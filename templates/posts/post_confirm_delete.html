@@ -11,9 +11,11 @@
     </p>
     <div class="flex gap-3 mt-6">
       <button
+        type="button"
         class="btn btn-danger"
         hx-delete="{% url 'posts:post_delete' post.pk %}"
-        hx-confirm="{% translate "This cannot be undone." %}"
+        hx-params="none"
+        hx-headers='{"{{ csrf_header }}": "{{ csrf_token }}"}'
         hx-target="body"
         hx-push-url="{% url 'posts:post_list' %}"
       >{% translate "Delete" %}</button>

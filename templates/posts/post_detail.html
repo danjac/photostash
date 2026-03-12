@@ -1,19 +1,118 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load heroicons i18n static thumbnail %}
+
+{% block scripts %}
+  <script src="{% static 'vendor/alpine-focus-3.15.2.min.js' %}" defer></script>
+  {{ block.super }}
+{% endblock scripts %}
 
 {% block content %}
   {% include "header.html" with title=post.title %}
   <div class="mt-4">
-    <p>{{ post.description }}</p>
-    <div class="flex gap-3 mt-6">
-      {% if request.user == post.owner %}
+    {% if post.description %}
+      <p class="text-(--color-text-muted)">{{ post.description }}</p>
+    {% endif %}
+    {% if request.user == post.owner %}
+      <div class="flex gap-3 mt-4">
         <a href="{% url 'posts:post_edit' post.pk %}" class="btn btn-secondary">
           {% translate "Edit" %}
         </a>
         <a href="{% url 'posts:post_delete' post.pk %}" class="btn btn-danger">
           {% translate "Delete" %}
         </a>
-      {% endif %}
-    </div>
+      </div>
+    {% endif %}
   </div>
+
+  {% if photos %}
+    <div
+      class="mt-6"
+      x-data="{
+              open: false,
+              current: 0,
+              touchStartX: 0,
+              photos: [{% for photo in photos %}{% thumbnail photo.photo '400x400' crop='center' as thumb %}{url:'{{ photo.photo.url|escapejs }}',width:{{ thumb.width }},height:{{ thumb.height }} }{% if not forloop.last %},{% endif %}{% endthumbnail %}{% endfor %}],
+              openAt(i) { this.current = i; this.open = true; },
+              prev() { this.current = (this.current - 1 + this.photos.length) % this.photos.length; },
+              next() { this.current = (this.current + 1) % this.photos.length; },
+              }"
+      @keydown.arrow-left.window="open && prev()"
+      @keydown.arrow-right.window="open && next()"
+      @keydown.escape.window="open = false"
+    >
+      <ul class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        {% for photo in photos %}
+          <li>
+            {% thumbnail photo.photo "400x400" crop="center" as thumb %}
+              <button
+                type="button"
+                @click="openAt({{ forloop.counter0 }})"
+                class="group block w-full overflow-hidden rounded-xl border border-(--color-border) transition-shadow hover:shadow-md"
+              >
+                <img
+                  src="{{ thumb.url }}"
+                  alt="{{ post.title }}"
+                  width="{{ thumb.width }}"
+                  height="{{ thumb.height }}"
+                  class="object-cover w-full transition-transform group-hover:scale-105 aspect-square"
+                  loading="lazy"
+                >
+              </button>
+            {% empty %}
+              <div class="aspect-square w-full rounded-xl border border-(--color-border) bg-(--color-border)"></div>
+            {% endthumbnail %}
+          </li>
+        {% endfor %}
+      </ul>
+
+      <!-- Carousel modal -->
+      <div
+        x-show="open"
+        x-trap.noscroll="open"
+        style="display: none;"
+        class="flex fixed inset-0 z-50 justify-center items-center bg-black/90"
+        x-transition
+        @touchstart="touchStartX = $event.touches[0].clientX"
+        @touchend="
+                   const dx = $event.changedTouches[0].clientX - touchStartX;
+                   if (dx > 50) prev();
+                   else if (dx < -50) next();
+                  "
+      >
+        <button
+          type="button"
+          @click="open = false"
+          class="absolute top-4 right-4 p-2 text-white rounded-full bg-white/10 hover:bg-white/20"
+          aria-label="{% translate "Close" %}"
+        >
+          {% heroicon_outline "x-mark" class="size-6" %}
+        </button>
+        <button
+          type="button"
+          @click="prev()"
+          class="absolute left-4 top-1/2 p-2 text-white rounded-full -translate-y-1/2 bg-white/10 hover:bg-white/20"
+          aria-label="{% translate "Previous photo" %}"
+        >
+          {% heroicon_outline "chevron-left" class="size-8" %}
+        </button>
+        <img
+          :src="photos[current].url"
+          :width="photos[current].width"
+          :height="photos[current].height"
+          class="object-contain max-w-full max-h-screen"
+          alt="{{ post.title }}"
+        >
+        <button
+          type="button"
+          @click="next()"
+          class="absolute right-4 top-1/2 p-2 text-white rounded-full -translate-y-1/2 bg-white/10 hover:bg-white/20"
+          aria-label="{% translate "Next photo" %}"
+        >
+          {% heroicon_outline "chevron-right" class="size-8" %}
+        </button>
+      </div>
+    </div>
+  {% else %}
+    <p class="mt-6 text-(--color-text-muted)">{% translate "No photos yet." %}</p>
+  {% endif %}
 {% endblock content %}
