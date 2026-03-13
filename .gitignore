@@ -14,6 +14,10 @@ memory/
 .venv/
 venv/
 .eggs/
+#
+# i18n
+locale/**/*.mo
+
 
 # Django
 *.log
