@@ -21,6 +21,11 @@ def e2e_user(transactional_db):
 @pytest.fixture
 def auth_page(page: Page, e2e_user, live_server) -> Page:
     """Playwright page authenticated as e2e_user."""
+    from django.conf import settings
+
+    page.context.add_cookies(
+        [{"name": settings.GDPR_COOKIE_NAME, "value": "true", "url": live_server.url}]
+    )
     login_url = f"{live_server.url}{reverse('account_login')}"
     page.goto(login_url)
     page.locator('[name="login"]').fill(e2e_user.username)

@@ -46,6 +46,7 @@
             {% thumbnail photo.photo "400x400" crop="center" as thumb %}
               <button
                 type="button"
+                data-photo-thumb
                 @click="openAt({{ forloop.counter0 }})"
                 class="group block w-full overflow-hidden rounded-xl border border-(--color-border) transition-shadow hover:shadow-md"
               >

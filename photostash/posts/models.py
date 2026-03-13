@@ -2,7 +2,7 @@ from typing import ClassVar
 
 from django.conf import settings
 from django.db import models
-from django.db.models import OuterRef, Q, Subquery, UniqueConstraint
+from django.db.models import OuterRef, Q, QuerySet, Subquery, UniqueConstraint
 from django.urls import reverse
 from sorl.thumbnail import ImageField
 
@@ -25,6 +25,7 @@ class Post(models.Model):
     """A user-created post containing photos."""
 
     objects: PostQuerySet = PostQuerySet.as_manager()  # type: ignore[assignment]
+    photos: QuerySet[Photo]
 
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,

@@ -40,11 +40,13 @@
                   if (inputEl) inputEl.value = '';
                   this.syncInput();
                   },
-                  removeFile(i) {
-                  this.files.splice(i, 1);
-                  this.previews.splice(i, 1);
+                  removeFile(preview) {
+                  const i = this.previews.indexOf(preview);
+                  if (i === -1) return;
+                  this.files = this.files.filter((_, idx) => idx !== i);
+                  this.previews = this.previews.filter((_, idx) => idx !== i);
                   if (this.newCoverIndex === i) this.newCoverIndex = -1;
-                  else if (this.newCoverIndex > i) this.newCoverIndex--;
+                  else if (this.newCoverIndex > i) this.newCoverIndex -= 1;
                   this.syncInput();
                   },
                   syncInput() {
@@ -80,7 +82,7 @@
           <div class="flex flex-wrap gap-1.5 mt-2">
             {# Existing saved photos (edit view) — cover first; wrapper is display:contents so items join the flex row #}
             {% if post %}
-              <div id="photos-grid" class="contents">
+              <div id="post-photos" class="contents">
                 {% include "posts/post_photos.html" with photos=photos %}
               </div>
             {% endif %}
@@ -90,7 +92,7 @@
               <input type="hidden" name="new_cover_index" :value="newCoverIndex">
             {% endif %}
             <template x-for="(preview, i) in previews" :key="i">
-              <div class="relative flex-shrink-0 size-28" x-show="preview">
+              <div class="relative flex-shrink-0 size-28">
                 <img
                   :src="preview"
                   width="112"
@@ -120,7 +122,8 @@
                 {% endif %}
                 <button
                   type="button"
-                  @click.stop="removeFile(i)"
+                  @click.stop="removeFile(preview)"
+                  aria-label="{% translate "Remove preview" %}"
                   class="flex absolute -top-1 -right-1 justify-center items-center text-white rounded-full size-4 bg-zinc-700 hover:bg-zinc-900"
                 >
                   {% heroicon_mini "x-mark" class="size-2.5" %}

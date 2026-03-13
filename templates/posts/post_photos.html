@@ -30,7 +30,7 @@
         class="absolute right-0 bottom-0 left-0 py-0.5 leading-tight text-center rounded-b hover:bg-white bg-white/80 text-[10px] text-zinc-700"
         hx-post="{% url 'posts:photo_set_cover' post.pk photo.pk %}"
         hx-params="none"
-        hx-target="#photos-grid"
+        hx-target="#post-photos"
         hx-swap="innerHTML"
         hx-headers='{"{{ csrf_header }}": "{{ csrf_token }}"}'
       >{% translate "Set cover" %}</button>

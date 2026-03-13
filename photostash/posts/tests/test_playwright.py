@@ -60,8 +60,8 @@ def test_photo_upload_remove_preview(auth_page: Page, live_server, test_image):
     auth_page.locator('input[name="photos"]').set_input_files(test_image)
     # Preview is visible
     expect(auth_page.locator('[x-data] img[src^="data:"]').first).to_be_visible()
-    # Remove it (small × button on the thumbnail)
-    auth_page.locator("[x-data] .relative button").first.click()
+    # Remove it (× button on the thumbnail, identified by aria-label)
+    auth_page.locator('[aria-label="Remove preview"]').first.click()
     # Preview grid is gone
     expect(auth_page.locator('[x-data] img[src^="data:"]')).to_have_count(0)
 
@@ -70,7 +70,7 @@ def test_create_post_with_photos_persists(auth_page: Page, live_server, test_ima
     """Submitting the create form with photos redirects to the detail page with the grid."""
     _create_post_with_images(auth_page, live_server, "My Photo Post", [test_image])
     expect(auth_page.locator("h1")).to_contain_text("My Photo Post")
-    expect(auth_page.locator("button[data-photo-url]").first).to_be_visible()
+    expect(auth_page.locator("button[data-photo-thumb]").first).to_be_visible()
 
 
 def test_first_uploaded_photo_is_cover(auth_page: Page, live_server, two_images):
@@ -88,7 +88,7 @@ def test_first_uploaded_photo_is_cover(auth_page: Page, live_server, two_images)
 def test_carousel_opens_on_thumbnail_click(auth_page: Page, live_server, test_image):
     """Clicking a thumbnail opens the full-screen carousel modal."""
     _create_post_with_images(auth_page, live_server, "Carousel Open", [test_image])
-    auth_page.locator("button[data-photo-url]").first.click()
+    auth_page.locator("button[data-photo-thumb]").first.click()
     expect(auth_page.locator(".fixed.inset-0")).to_be_visible()
     expect(auth_page.locator(".fixed.inset-0 img")).to_be_visible()
 
@@ -96,7 +96,7 @@ def test_carousel_opens_on_thumbnail_click(auth_page: Page, live_server, test_im
 def test_carousel_closes_with_escape(auth_page: Page, live_server, test_image):
     """Pressing Escape closes the carousel modal."""
     _create_post_with_images(auth_page, live_server, "Carousel Escape", [test_image])
-    auth_page.locator("button[data-photo-url]").first.click()
+    auth_page.locator("button[data-photo-thumb]").first.click()
     expect(auth_page.locator(".fixed.inset-0")).to_be_visible()
     auth_page.keyboard.press("Escape")
     expect(auth_page.locator(".fixed.inset-0")).not_to_be_visible()
@@ -105,7 +105,7 @@ def test_carousel_closes_with_escape(auth_page: Page, live_server, test_image):
 def test_carousel_closes_with_close_button(auth_page: Page, live_server, test_image):
     """Clicking the × button closes the carousel modal."""
     _create_post_with_images(auth_page, live_server, "Carousel Close Btn", [test_image])
-    auth_page.locator("button[data-photo-url]").first.click()
+    auth_page.locator("button[data-photo-thumb]").first.click()
     expect(auth_page.locator(".fixed.inset-0")).to_be_visible()
     auth_page.locator(".fixed.inset-0 button[aria-label]").first.click()
     expect(auth_page.locator(".fixed.inset-0")).not_to_be_visible()
@@ -115,7 +115,7 @@ def test_carousel_arrow_key_navigation(auth_page: Page, live_server, two_images)
     """Arrow keys advance through photos in the carousel."""
     _create_post_with_images(auth_page, live_server, "Carousel Nav", two_images)
     # Open on first photo
-    auth_page.locator("button[data-photo-url]").first.click()
+    auth_page.locator("button[data-photo-thumb]").first.click()
     first_src = auth_page.locator(".fixed.inset-0 img").get_attribute("src")
     # Navigate to next
     auth_page.keyboard.press("ArrowRight")
