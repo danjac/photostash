@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _l
 from django.views.decorators.http import (
     require_http_methods,
     require_POST,
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from photostash.http.request import HttpRequest
     from photostash.http.response import RenderOrRedirectResponse
 
-_PHOTO_REQUIRED_ERROR = _("Please upload at least one photo.")
+_PHOTO_REQUIRED_ERROR = _l("Please upload at least one photo.")
 
 
 @require_safe
