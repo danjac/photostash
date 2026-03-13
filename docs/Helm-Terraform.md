@@ -92,10 +92,12 @@ helm/
 ### Commands
 
 ```bash
-# Deploy or update the application (preserves running image via --reuse-values)
+# Deploy or update the application
+# Runs helm dependency build automatically, then helm upgrade --install
 just helm site
 
 # Deploy or update the observability stack
+# Also runs helm dependency build — required on first install (fetches kube-prometheus-stack, loki, etc.)
 just helm observability
 ```
 
@@ -117,9 +119,88 @@ The `deploy` GitHub Actions workflow:
 2. Builds and pushes Docker image (`docker.yml`)
 3. Runs `helm upgrade --rollback-on-failure` with the new image
 
-Required repository secrets:
-- `KUBECONFIG_BASE64` - base64-encoded kubeconfig
-- `HELM_VALUES_SECRET` - full contents of `values.secret.yaml`
+### GitHub Actions secrets
+
+Two secrets must be set in **GitHub → Settings → Secrets and variables → Actions**:
+
+| Secret | What it is | Where it comes from |
+|--------|-----------|---------------------|
+| `KUBECONFIG_BASE64` | Base64-encoded K3s kubeconfig | `just get-kubeconfig`, then base64-encoded (see below) |
+| `HELM_VALUES_SECRET` | Full contents of `helm/site/values.secret.yaml` | The file you fill in before deploying |
+
+**Prerequisites before setting secrets:**
+
+1. Hetzner infra must be provisioned (`just terraform hetzner apply`)
+2. Kubeconfig must be fetched (`just get-kubeconfig` → writes `~/.kube/photostash.yaml`)
+3. `helm/site/values.secret.yaml` must be fully filled in
+
+**Push both secrets in one command:**
+
+```bash
+just gh-set-secrets
+```
+
+`gh secret set` cannot accept multi-line values interactively — `just gh-set-secrets` pipes
+both values correctly via stdin. Running it again overwrites the existing secrets.
+
+To set them individually:
+
+```bash
+# Kubeconfig: base64-encode (no line wrapping) and pipe to gh
+base64 -w 0 ~/.kube/photostash.yaml | gh secret set KUBECONFIG_BASE64
+
+# Helm values: pipe the file directly
+gh secret set HELM_VALUES_SECRET < helm/site/values.secret.yaml
+```
+
+Verify with:
+
+```bash
+gh secret list
+```
+
+### Build workflows
+
+Two workflows build the Docker image:
+
+| Workflow | Trigger | Does |
+|----------|---------|------|
+| `build.yml` | Manual (`just gh build`) | Checks + build only, no deploy |
+| `deploy.yml` | Manual (`just gh deploy`) | Checks + build + deploy |
+
+Use `just gh build` to pre-build the image before the first deploy, or
+go straight to `just gh deploy` which builds and deploys in one run.
+`just helm` does **not** build — only use it when an image already exists in the registry.
+
+### Private repositories and image pulling
+
+ghcr.io packages are **private by default** when the repository is private. The K3s cluster
+has no credentials to pull private images, so pods will fail with `ImagePullBackOff`.
+
+**Simplest fix: make the package public**
+
+> GitHub → Your profile → Packages → photostash → Package settings → Change visibility → Public
+
+This is fine for personal projects where the image itself contains no secrets
+(secrets are injected at runtime via Kubernetes secrets / Helm values).
+
+**Alternative: image pull secret (for private images)**
+
+Create a GitHub PAT with `read:packages` scope, then add it to the cluster:
+
+```bash
+just kube create secret docker-registry ghcr-pull-secret \
+  --docker-server=ghcr.io \
+  --docker-username=danjac \
+  --docker-password=<your-pat>
+```
+
+Then reference it in `helm/site/values.yaml`:
+
+```yaml
+imagePullSecrets:
+  - name: ghcr-pull-secret
+```
 
 ## Production Commands
 

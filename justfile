@@ -155,9 +155,18 @@ gh workflow *args:
 get-kubeconfig:
     {{ script_dir }}/get-kubeconfig.sh
 
+# Push KUBECONFIG_BASE64 and HELM_VALUES_SECRET to GitHub Actions secrets.
+# Multi-line values must be piped via stdin - 'gh secret set' cannot accept them interactively.
+[group('deployment')]
+gh-set-secrets:
+    base64 -w 0 {{ kubeconfig }} | gh secret set KUBECONFIG_BASE64
+    gh secret set HELM_VALUES_SECRET < helm/site/values.secret.yaml
+    gh secret list
+
 # Install or upgrade a Helm chart, e.g. 'just helm site' or 'just helm observability'
 [group('deployment')]
 helm chart="site":
+    helm dependency build helm/{{ chart }}/
     helm upgrade --install {{ chart }} helm/{{ chart }}/ \
         --kubeconfig {{ kubeconfig }} \
         --reuse-values \
@@ -168,6 +177,11 @@ helm chart="site":
 [group('deployment')]
 terraform dir *args:
     terraform -chdir=terraform/{{ dir }} {{ args }}
+
+# Print a raw Terraform output value, e.g. 'just terraform-value cloudflare origin_key_pem'
+[group('deployment')]
+terraform-value dir name:
+    terraform -chdir=terraform/{{ dir }} output -raw {{ name }}
 
 # Run Django manage.py commands on production server
 [group('production')]
