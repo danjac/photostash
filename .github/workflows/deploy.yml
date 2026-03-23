@@ -27,7 +27,7 @@ jobs:
       KUBECONFIG_FILE: photostash.yaml
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up kubectl
         uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede  # v4
       - name: Set up Helm
